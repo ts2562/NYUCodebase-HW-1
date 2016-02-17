@@ -30,6 +30,11 @@ GLuint LoadTexture(const char *image_path) {
 	return textureID;
 }
 
+double p1X = 0;
+double p1Y = 0;
+double p2X = 0;
+double p2Y = 0;
+
 int main(int argc, char *argv[])
 {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -63,6 +68,14 @@ int main(int argc, char *argv[])
 
 	double movement = 0.0;
 
+	double ballBounce = 0.0;
+
+	bool bounceHigh = false;
+
+	bool firstHit = false;
+
+	const Uint8 *keys = SDL_GetKeyboardState(NULL);
+
 	while (!done) {
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
@@ -75,80 +88,135 @@ int main(int argc, char *argv[])
 		program.setModelMatrix(modelMatrix);
 		program.setProjectionMatrix(projectionMatrix);
 		program.setViewMatrix(viewMatrix);
-		glBindTexture(GL_TEXTURE_2D, dogTexture);
+		glBindTexture(GL_TEXTURE_2D, ballTexture);
+
 		float ticks = (float)SDL_GetTicks() / 1000.0f;
 
 		float elapsed = ticks - lastFrameTicks;
-
+			
 		lastFrameTicks = ticks;
 
-		movement = movement + elapsed;
+		if (firstHit == false){
+			movement = movement + elapsed;
+		}
+
+		//makes the ball bounce
+		if ((ballBounce * 0.75) >= 1){
+			bounceHigh = true;
+		}
+
+		if ((ballBounce * 0.75) <= -1){
+			bounceHigh = false;
+		}
 		
-			float vertices[] = { -1.5 + (movement * 0.1), -0.5, -0.5 + (movement* 0.1), -0.5, -0.5 + (movement * 0.1), 0.5,
-				-1.5 + (movement * 0.1), -0.5, -0.5 + (movement * 0.1), 0.5, -1.5 + (movement * 0.1), 0.5 };
+		if (bounceHigh == false){
+			ballBounce = ballBounce + elapsed;
+		}
+		else if (bounceHigh == true){
+			ballBounce = ballBounce - elapsed;
+		}
 
-
+		
+		float vertices[] = { -1.4 + (movement * 0.25), -0.4 + (ballBounce * 0.25), -0.4 + (movement * 0.25), -0.4 + (ballBounce * 0.25),
+			-0.4 + (movement * 0.25), 0.4 + (ballBounce * 0.25), -1.4 + (movement * 0.25), -0.4 + (ballBounce * 0.25),
+			-0.4 + (movement * 0.25), 0.4 + (ballBounce * 0.25), -1.4 + (movement * 0.25), 0.4 + (ballBounce * 0.25) };
+		
 		glVertexAttribPointer(program.positionAttribute, 2, GL_FLOAT, false, 0, vertices);
-
 		glEnableVertexAttribArray(program.positionAttribute);
-
 		float texCoords[] = { 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0 };
-
 		glVertexAttribPointer(program.texCoordAttribute, 2, GL_FLOAT, false, 0, texCoords);
-
 		glEnableVertexAttribArray(program.texCoordAttribute);
-
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-
 		glDisableVertexAttribArray(program.positionAttribute);
-
 		glDisableVertexAttribArray(program.texCoordAttribute);
 
 
-		
+		if (keys[SDL_SCANCODE_A]) {
+			--p1X;
+		}
+		else if (keys[SDL_SCANCODE_D]) {
+			++p1X;
+		}
 
-		glBindTexture(GL_TEXTURE_2D, boneTexture);
+		if (keys[SDL_SCANCODE_W]) {
+			++p1Y;
+		}
+		else if (keys[SDL_SCANCODE_S]) {
+			--p1Y;
+		}
 
-		float vertices2[] = { -2.5, -0.5, -1.5, -0.5, -1.5, 0.5, -2.5, -0.5, -1.5, 0.5, -2.5, 0.5 };
+		glBindTexture(GL_TEXTURE_2D, dogTexture);
+
+		float vertices2[] = { -2.5 + (p1X * 0.001), -0.5 + (p1Y * 0.001), -1.5 + (p1X * 0.001), -0.5 + (p1Y * 0.001),
+			-1.5 + (p1X * 0.001), 0.5 + (p1Y * 0.001), -2.5 + (p1X * 0.001), -0.5 + (p1Y * 0.001),
+			-1.5 + (p1X * 0.001), 0.5 + (p1Y * 0.001), -2.5 + (p1X * 0.001), 0.5 + (p1Y * 0.001) };
+
 
 		glVertexAttribPointer(program.positionAttribute, 2, GL_FLOAT, false, 0, vertices2);
-
 		glEnableVertexAttribArray(program.positionAttribute);
-
 		float texCoords2[] = { 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0 };
-
 		glVertexAttribPointer(program.texCoordAttribute, 2, GL_FLOAT, false, 0, texCoords2);
-
 		glEnableVertexAttribArray(program.texCoordAttribute);
-
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-
 		glDisableVertexAttribArray(program.positionAttribute);
-
 		glDisableVertexAttribArray(program.texCoordAttribute);
 
 
-		glBindTexture(GL_TEXTURE_2D, ballTexture);
+		if (keys[SDL_SCANCODE_J]) {
+			--p2X;
+		}
+		else if (keys[SDL_SCANCODE_L]) {
+			++p2X;
+		}
 
-		float vertices3[] = { 1.5, -0.5, 2.5, -0.5, 2.5, 0.5, 1.5, -0.5, 2.5, 0.5, 1.5, 0.5 };
+		if (keys[SDL_SCANCODE_I]) {
+			++p2Y;
+		}
+		else if (keys[SDL_SCANCODE_K]) {
+			--p2Y;
+		}
+
+		glBindTexture(GL_TEXTURE_2D, dogTexture);
+
+		float vertices3[] = { 1.5 + (p2X * 0.001), -0.5 + (p2Y * 0.001), 2.5 + (p2X * 0.001), -0.5 + (p2Y * 0.001),
+			2.5 + (p2X * 0.001), 0.5 + (p2Y * 0.001), 1.5 + (p2X * 0.001), -0.5 + (p2Y * 0.001),
+			2.5 + (p2X * 0.001), 0.5 + (p2Y * 0.001), 1.5 + (p2X * 0.001), 0.5 + (p2Y * 0.001) };
 
 		glVertexAttribPointer(program.positionAttribute, 2, GL_FLOAT, false, 0, vertices3);
-
 		glEnableVertexAttribArray(program.positionAttribute);
-
 		float texCoords3[] = { 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0 };
-
 		glVertexAttribPointer(program.texCoordAttribute, 2, GL_FLOAT, false, 0, texCoords3);
-
 		glEnableVertexAttribArray(program.texCoordAttribute);
-
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-
 		glDisableVertexAttribArray(program.positionAttribute);
-
 		glDisableVertexAttribArray(program.texCoordAttribute);
-
 		SDL_GL_SwapWindow(displayWindow);
+
+		//collision
+		if ((vertices[11] <= vertices2[5] && vertices[11] >= vertices2[3])
+			|| (vertices[1] <= vertices2[5] && vertices[1] >= vertices2[3])
+			&& vertices[10] == vertices2[4])
+		{
+			firstHit = true;
+			movement = movement + elapsed;
+		}
+		else if ((vertices[5] <= vertices3[11] && vertices[5] >= vertices3[1])
+			|| (vertices[3] <= vertices3[11] && vertices[3] >= vertices3[1])
+			&& vertices[4] == vertices3[10])
+		{
+			firstHit = true;
+			movement = movement - elapsed;
+		}
+
+		if (vertices[10] <= vertices2[4])
+		{
+			std::cout << "Player 2 Wins" << std::endl;
+		}
+
+		else if (vertices[4] >= vertices3[10])
+		{
+			std::cout << "Player 1 Wins" << std::endl;
+		}
 	}
 
 	SDL_Quit();
